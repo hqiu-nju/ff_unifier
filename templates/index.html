@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FF Unifier – Frequent Flyer Points Calculator</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+        crossorigin="anonymous" />
+  <style>
+    body { background-color: #f8f9fa; }
+    .hero {
+      background: linear-gradient(135deg, #e63946 0%, #c1121f 100%);
+      color: #fff;
+      padding: 2.5rem 1.5rem;
+      border-radius: 0 0 1rem 1rem;
+      margin-bottom: 2rem;
+    }
+    .hero h1 { font-weight: 700; }
+    .card { border: none; border-radius: 0.75rem; }
+    .card-header { border-radius: 0.75rem 0.75rem 0 0 !important; font-weight: 600; }
+    .result-card { transition: transform 0.15s; }
+    .result-card:hover { transform: translateY(-3px); }
+    .miles-value { font-size: 2.2rem; font-weight: 700; color: #c1121f; }
+    .status-value { font-size: 1.6rem; font-weight: 600; color: #457b9d; }
+    .badge-earns { background-color: #2a9d8f; }
+    .badge-no-earn { background-color: #adb5bd; }
+    .distance-badge {
+      background: #fff3;
+      border: 1px solid #fff6;
+      border-radius: 2rem;
+      padding: 0.35rem 1rem;
+      display: inline-block;
+      font-size: 0.95rem;
+    }
+    .section-title { font-weight: 700; color: #1d3557; margin-bottom: 1.25rem; }
+    .program-check .form-check-label { font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero text-center">
+  <h1>✈ FF Unifier</h1>
+  <p class="mb-0 fs-5">Compare frequent flyer points &amp; status credits across up to 3 loyalty programmes</p>
+</div>
+
+<div class="container pb-5" style="max-width: 900px;">
+
+  <!-- Alert -->
+  {% if error %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <strong>Oops!</strong> {{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  <!-- Input Form -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-dark text-white">Flight Details</div>
+    <div class="card-body p-4">
+      <form action="/calculate" method="POST">
+
+        <!-- Route row -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-5">
+            <label for="origin" class="form-label fw-semibold">Origin</label>
+            <select id="origin" name="origin" class="form-select" required>
+              <option value="">— Select airport —</option>
+              {% for code, label in airports %}
+              <option value="{{ code }}"
+                {% if form_data.get('origin') == code %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-2 d-flex align-items-end justify-content-center">
+            <span class="fs-3 mb-1">→</span>
+          </div>
+
+          <div class="col-md-5">
+            <label for="destination" class="form-label fw-semibold">Destination</label>
+            <select id="destination" name="destination" class="form-select" required>
+              <option value="">— Select airport —</option>
+              {% for code, label in airports %}
+              <option value="{{ code }}"
+                {% if form_data.get('destination') == code %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Airline + Class row -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="airline" class="form-label fw-semibold">Operating Airline</label>
+            <select id="airline" name="airline" class="form-select" required>
+              <option value="">— Select airline —</option>
+              {% for code, label in airlines %}
+              <option value="{{ code }}"
+                {% if form_data.get('airline') == code %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label for="booking_class" class="form-label fw-semibold">Booking Class</label>
+            <select id="booking_class" name="booking_class" class="form-select" required>
+              <option value="">— Select class —</option>
+              {% for cabin, classes in booking_classes %}
+              <optgroup label="{{ cabin }}">
+                {% for code, label in classes %}
+                <option value="{{ code }}"
+                  {% if form_data.get('booking_class') == code %}selected{% endif %}>
+                  {{ label }}
+                </option>
+                {% endfor %}
+              </optgroup>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <!-- Programme selection -->
+        <div class="mb-4">
+          <p class="form-label fw-semibold mb-2">Loyalty Programs <span class="text-muted fw-normal">(select up to 3)</span></p>
+          <div class="row g-2 program-check">
+            {% for pid, pname in programs %}
+            <div class="col-md-4 col-sm-6">
+              <div class="form-check border rounded p-2 ps-4 h-100">
+                <input class="form-check-input" type="checkbox"
+                       name="programs" value="{{ pid }}" id="prog_{{ pid }}"
+                       {% if form_data.get('programs') and pid in form_data.get('programs') %}checked{% endif %}
+                       onclick="limitCheckboxes(3)">
+                <label class="form-check-label" for="prog_{{ pid }}">{{ pname }}</label>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-danger btn-lg">Calculate Points</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Results -->
+  {% if result %}
+  <div class="mb-2">
+    <h4 class="section-title">Results</h4>
+    <div class="alert alert-secondary d-flex align-items-center gap-3 flex-wrap">
+      <span>
+        <strong>{{ result.origin_name }}</strong> ({{ result.origin }})
+        →
+        <strong>{{ result.destination_name }}</strong> ({{ result.destination }})
+      </span>
+      <span>Operating: <strong>{{ result.airline }}</strong></span>
+      <span>Class: <strong>{{ result.booking_class }}</strong></span>
+      <span class="distance-badge ms-auto">
+        🌐 <strong>{{ "{:,.0f}".format(result.distance_miles) }} mi</strong>
+        &nbsp;/&nbsp;
+        {{ "{:,.0f}".format(result.distance_miles * 1.60934) }} km
+      </span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    {% for r in result.results %}
+    <div class="col-md-{% if result.results|length == 1 %}12{% elif result.results|length == 2 %}6{% else %}4{% endif %}">
+      <div class="card shadow-sm result-card h-100">
+        <div class="card-header {% if r.earns %}bg-danger text-white{% else %}bg-secondary text-white{% endif %}">
+          {{ r.program_name }}
+        </div>
+        <div class="card-body text-center py-4">
+          {% if r.earns %}
+            <div class="mb-3">
+              <div class="text-muted small mb-1">{{ r.points_unit }}</div>
+              <div class="miles-value">{{ "{:,}".format(r.award_miles) }}</div>
+            </div>
+            <hr />
+            <div>
+              <div class="text-muted small mb-1">{{ r.status_unit }}</div>
+              <div class="status-value">{{ "{:,}".format(r.status_points) }}</div>
+            </div>
+            <div class="mt-3">
+              <span class="badge badge-earns text-white">{{ r.earn_pct }}% earn rate</span>
+            </div>
+          {% else %}
+            <div class="py-3 text-muted">
+              <div class="fs-1">✗</div>
+              <div>This flight does not earn in<br/><strong>{{ r.program_name }}</strong></div>
+            </div>
+            <span class="badge badge-no-earn text-white">Not earnable</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <p class="text-muted small mt-4">
+    ⚠️ Earning rates shown are indicative estimates based on publicly available information.
+    Always verify with the official loyalty programme before booking.
+    Status-point rates labelled "(est.)" use a distance-based approximation.
+  </p>
+  {% endif %}
+
+</div><!-- /container -->
+
+<footer class="text-center text-muted py-3 small border-top mt-4">
+  FF Unifier &middot; Not affiliated with any airline or loyalty programme
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmQkBDlRj4VgJMQe696iKqRsOoLk"
+        crossorigin="anonymous"></script>
+<script>
+function limitCheckboxes(max) {
+  const boxes = document.querySelectorAll('input[name="programs"]');
+  const checked = [...boxes].filter(b => b.checked);
+  if (checked.length > max) {
+    // Uncheck the one that was just clicked (it will be the last checked one)
+    // Actually find any newly checked box beyond limit and uncheck it
+    const lastChecked = [...boxes].filter(b => b.checked)[max];
+    if (lastChecked) lastChecked.checked = false;
+  }
+}
+</script>
+</body>
+</html>
