@@ -205,6 +205,74 @@ class TestCalculatePoints:
         r_long  = calculate_points(10_000, "QF", "J", "QFF")
         assert r_long["status_points"] > r_short["status_points"]
 
+    def test_qff_oneworld_uses_distance_band_table(self):
+        # BA (oneworld) in Y band: 751-1500 mi should award 30 SC.
+        result = calculate_points(1_000, "BA", "Y", "QFF")
+        assert result["status_points"] == 30
+
+    def test_qff_oneworld_status_band_boundary(self):
+        # BA (oneworld) in J band:
+        # - up to 750 mi => 40 SC
+        # - from 751 mi  => 60 SC
+        at_boundary = calculate_points(750, "BA", "J", "QFF")
+        just_over = calculate_points(751, "BA", "J", "QFF")
+        assert at_boundary["status_points"] == 40
+        assert just_over["status_points"] == 60
+
+    def test_qff_qantas_stays_on_legacy_status_rate(self):
+        # QF should keep its own status-rate table (not oneworld partner table).
+        result = calculate_points(1_000, "QF", "J", "QFF")
+        assert result["status_points"] == 12
+
+    def test_qff_cathay_uses_oneworld_status_table(self):
+        # CX is oneworld; 1,000 miles in Y should use partner status table (30 SC).
+        result = calculate_points(1_000, "CX", "Y", "QFF")
+        assert result["status_points"] == 30
+
+    def test_qff_singapore_airlines_not_earnable(self):
+        result = calculate_points(1_000, "SQ", "Y", "QFF")
+        assert result["award_miles"] == 0
+        assert result["status_points"] == 0
+        assert result["earns"] is False
+
+    def test_qff_virgin_australia_not_earnable(self):
+        result = calculate_points(1_000, "VA", "Y", "QFF")
+        assert result["award_miles"] == 0
+        assert result["status_points"] == 0
+        assert result["earns"] is False
+
+    def test_krisflyer_sq_status_uses_official_percent_table(self):
+        # SQ F class earns 200% Elite miles.
+        result = calculate_points(1_000, "SQ", "F", "KRISFLYER")
+        assert result["status_points"] == 2_000
+
+    def test_krisflyer_sq_discount_status_percent(self):
+        # SQ K class earns 50% Elite miles.
+        result = calculate_points(1_000, "SQ", "K", "KRISFLYER")
+        assert result["status_points"] == 500
+
+    def test_cathay_short_type1_status_points(self):
+        # HKG-BKK (short type 1) in J should earn 40 Status Points.
+        result = calculate_flight("HKG", "BKK", "CX", "J", ["CATHAY"])
+        assert "error" not in result
+        assert result["results"][0]["status_points"] == 40
+
+    def test_cathay_short_type2_status_points(self):
+        # HKG-NRT (short type 2) in J should earn 50 Status Points.
+        result = calculate_flight("HKG", "NRT", "CX", "J", ["CATHAY"])
+        assert "error" not in result
+        assert result["results"][0]["status_points"] == 50
+
+    def test_velocity_business_status_points(self):
+        # 251-500 miles in Business bucket => 20 Status Credits.
+        result = calculate_points(400, "VA", "J", "VELOCITY")
+        assert result["status_points"] == 20
+
+    def test_velocity_lite_status_points(self):
+        # 251-500 miles in Lite bucket => 5 Status Credits.
+        result = calculate_points(400, "VA", "K", "VELOCITY")
+        assert result["status_points"] == 5
+
 
 # ---------------------------------------------------------------------------
 # calculate_flight

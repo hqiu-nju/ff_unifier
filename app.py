@@ -50,6 +50,7 @@ AIRLINE_OPTIONS = [
     ("EK", "EK – Emirates"),
     ("EY", "EY – Etihad Airways"),
     ("VS", "VS – Virgin Atlantic"),
+    ("VA", "VA – Virgin Australia"),
     ("JQ", "JQ – Jetstar"),
 ]
 

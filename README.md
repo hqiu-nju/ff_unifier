@@ -9,7 +9,9 @@ Calculate and compare **frequent flyer points** and **status credits** across up
 - Supports 100+ airports worldwide and 35+ airlines
 - Loyalty programmes supported:
   - **Qantas Frequent Flyer** (Status Credits + Qantas Points)
+  - **Cathay Membership** (Status Points + Asia Miles)
   - **Singapore Airlines KrisFlyer** (Elite Miles + KrisFlyer Miles)
+  - **Virgin Australia Velocity** (Status Credits + Velocity Points)
   - **United MileagePlus** (PQP + Award Miles)
   - **American Airlines AAdvantage** (Loyalty Points + AAdvantage Miles)
   - **British Airways Executive Club** (Tier Points + Avios)

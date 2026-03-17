@@ -126,6 +126,7 @@ ALLIANCES = {
     "WY": "none",
     "GF": "none",
     "VS": "none",
+    "VA": "none",
 }
 
 # ---------------------------------------------------------------------------
@@ -137,6 +138,9 @@ ALLIANCES = {
 #   status_unit  – name of the status currency
 #   min_miles    – minimum award miles credited per flight regardless of distance
 #   airlines     – dict keyed by IATA airline code with band→(miles_pct, status_rate)
+#   status_bands – optional per-flight status table keyed by airline/alliance fallback
+#   status_pct_by_class – optional status earn percentages by airline+booking class
+#                         (used when status is a percentage of flown distance)
 #   default_*    – fallback earn rates by alliance / generic
 #
 # status_rate is per 1 000 flown miles; callers multiply by (distance/1000).
@@ -178,6 +182,17 @@ PROGRAMS = {
                 "Y": (75, 5),   "H": (50, 3),  "K": (25, 2),
                 "Q": (0, 0),    "O": (0, 0),
             },
+            # Not eligible for Qantas Points/Status Credits as a direct partner.
+            "SQ": {
+                "F": (0, 0), "J": (0, 0), "W": (0, 0),
+                "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+                "Q": (0, 0), "O": (0, 0),
+            },
+            "VA": {
+                "F": (0, 0), "J": (0, 0), "W": (0, 0),
+                "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+                "Q": (0, 0), "O": (0, 0),
+            },
             "JL": {
                 "F": (150, 12), "J": (100, 8), "W": (75, 5),
                 "Y": (75, 5),   "H": (50, 3),  "K": (25, 2),
@@ -214,6 +229,27 @@ PROGRAMS = {
             "F": (0, 0), "J": (0, 0), "W": (0, 0),
             "Y": (0, 0), "H": (0, 0), "K": (0, 0),
             "Q": (0, 0), "O": (0, 0),
+        },
+        # Qantas partner-airline Status Credits table (All other flights, one-way).
+        # Source:
+        # https://www.qantas.com/au/en/frequent-flyer/calculators.html#/earning-tables?int_cam=au:partner-airline-earning-tables:article:frequent-flyer:en:nn
+        "status_bands": {
+            # Keep explicit airline tables for Qantas/Jetstar/Emirates on legacy logic.
+            "QF": None,
+            "JQ": None,
+            "EK": None,
+            "default_oneworld": [
+                (100,  {"F": 30, "J": 20, "W": 10, "Y": 10, "H": 5,  "K": 5,  "Q": 0, "O": 0}),
+                (250,  {"F": 30, "J": 20, "W": 10, "Y": 10, "H": 5,  "K": 5,  "Q": 0, "O": 0}),
+                (500,  {"F": 50, "J": 40, "W": 20, "Y": 20, "H": 10, "K": 10, "Q": 0, "O": 0}),
+                (750,  {"F": 60, "J": 40, "W": 20, "Y": 20, "H": 10, "K": 10, "Q": 0, "O": 0}),
+                (1500, {"F": 90, "J": 60, "W": 30, "Y": 30, "H": 15, "K": 15, "Q": 0, "O": 0}),
+                (2500, {"F": 120, "J": 80, "W": 40, "Y": 40, "H": 20, "K": 20, "Q": 0, "O": 0}),
+                (3500, {"F": 150, "J": 100, "W": 50, "Y": 50, "H": 25, "K": 25, "Q": 0, "O": 0}),
+                (5000, {"F": 180, "J": 120, "W": 60, "Y": 60, "H": 30, "K": 30, "Q": 0, "O": 0}),
+                (6500, {"F": 210, "J": 140, "W": 70, "Y": 70, "H": 35, "K": 35, "Q": 0, "O": 0}),
+                (None, {"F": 240, "J": 160, "W": 80, "Y": 80, "H": 40, "K": 40, "Q": 0, "O": 0}),
+            ],
         },
     },
 
@@ -263,6 +299,21 @@ PROGRAMS = {
                 "Q": (25, 0),   "O": (0, 0),
             },
         },
+        # Singapore Airlines Elite miles accrual by booking class (% of flown miles).
+        # Source:
+        # https://www.singaporeair.com/en_UK/us/ppsclub-krisflyer/earning-krisflyer-miles/earn-miles-when-you-fly-on-singapore-airlines/
+        "status_pct_by_class": {
+            "SQ": {
+                "F": 200, "A": 200,
+                "Z": 150, "C": 150, "J": 150,
+                "U": 125, "D": 125,
+                "S": 125, "T": 125,
+                "R": 100, "L": 100, "P": 100,
+                "Y": 100, "B": 100, "E": 100,
+                "M": 75, "H": 75, "W": 75,
+                "Q": 50, "N": 50, "V": 50, "K": 50, "G": 50,
+            },
+        },
         "default_star": {
             "F": (125, 12), "J": (100, 10), "W": (75, 6),
             "Y": (75, 4),   "H": (50, 2),   "K": (25, 0),
@@ -281,7 +332,70 @@ PROGRAMS = {
     },
 
     # -----------------------------------------------------------------------
-    # 3. United MileagePlus
+    # 3. Cathay Membership
+    # -----------------------------------------------------------------------
+    "CATHAY": {
+        "name": "Cathay Membership",
+        "points_unit": "Asia Miles",
+        "status_unit": "Status Points",
+        "min_miles": 0,
+        "airlines": {
+            "CX": {
+                # Award-mile side is kept indicative; status points are computed
+                # by the Cathay distance-zone table in calculator.py.
+                "F": (150, 0), "J": (125, 0), "W": (100, 0),
+                "Y": (100, 0), "H": (75, 0),  "K": (50, 0),
+                "Q": (25, 0),  "O": (0, 0),
+            },
+        },
+        "default_oneworld": {
+            "F": (0, 0), "J": (0, 0), "W": (0, 0),
+            "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+            "Q": (0, 0), "O": (0, 0),
+        },
+        "default_partner": {
+            "F": (0, 0), "J": (0, 0), "W": (0, 0),
+            "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+            "Q": (0, 0), "O": (0, 0),
+        },
+        "default_none": {
+            "F": (0, 0), "J": (0, 0), "W": (0, 0),
+            "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+            "Q": (0, 0), "O": (0, 0),
+        },
+    },
+
+    # -----------------------------------------------------------------------
+    # 4. Virgin Australia Velocity
+    # -----------------------------------------------------------------------
+    "VELOCITY": {
+        "name": "Virgin Australia Velocity",
+        "points_unit": "Velocity Points",
+        "status_unit": "Status Credits",
+        "min_miles": 0,
+        "airlines": {
+            "VA": {
+                # Award-mile side is indicative; status credits follow
+                # the one-way mileage table in calculator.py.
+                "F": (150, 0), "J": (125, 0), "W": (100, 0),
+                "Y": (100, 0), "H": (75, 0),  "K": (50, 0),
+                "Q": (25, 0),  "O": (0, 0),
+            },
+        },
+        "default_partner": {
+            "F": (0, 0), "J": (0, 0), "W": (0, 0),
+            "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+            "Q": (0, 0), "O": (0, 0),
+        },
+        "default_none": {
+            "F": (0, 0), "J": (0, 0), "W": (0, 0),
+            "Y": (0, 0), "H": (0, 0), "K": (0, 0),
+            "Q": (0, 0), "O": (0, 0),
+        },
+    },
+
+    # -----------------------------------------------------------------------
+    # 5. United MileagePlus
     # -----------------------------------------------------------------------
     "MILEAGEPLUS": {
         "name": "United MileagePlus",
@@ -344,7 +458,7 @@ PROGRAMS = {
     },
 
     # -----------------------------------------------------------------------
-    # 4. American Airlines AAdvantage
+    # 6. American Airlines AAdvantage
     # -----------------------------------------------------------------------
     "AADVANTAGE": {
         "name": "American Airlines AAdvantage",
@@ -407,7 +521,7 @@ PROGRAMS = {
     },
 
     # -----------------------------------------------------------------------
-    # 5. British Airways Executive Club
+    # 7. British Airways Executive Club
     # -----------------------------------------------------------------------
     "BAEC": {
         "name": "British Airways Executive Club",
@@ -470,7 +584,7 @@ PROGRAMS = {
     },
 
     # -----------------------------------------------------------------------
-    # 6. Air France / KLM Flying Blue
+    # 8. Air France / KLM Flying Blue
     # -----------------------------------------------------------------------
     "FLYINGBLUE": {
         "name": "Air France / KLM Flying Blue",
@@ -521,7 +635,9 @@ PROGRAMS = {
 # Ordered list for the UI
 PROGRAM_LIST = [
     ("QFF",        "Qantas Frequent Flyer"),
+    ("CATHAY",     "Cathay Membership"),
     ("KRISFLYER",  "Singapore Airlines KrisFlyer"),
+    ("VELOCITY",   "Virgin Australia Velocity"),
     ("MILEAGEPLUS","United MileagePlus"),
     ("AADVANTAGE", "American Airlines AAdvantage"),
     ("BAEC",       "British Airways Executive Club"),
