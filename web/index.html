@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Search flights and award seats, then compare frequent flyer earnings. Points calculations run on your device; live availability comes from connected travel providers.">
+  <meta name="theme-color" content="#812e40">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>FF Unifier · Make every flight count</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./amex-ui.js"></script>
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#flight-form">Skip to flight comparison</a>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="FF Unifier home"><span class="brand-symbol" aria-hidden="true">↗</span> FF Unifier</a>
+    <a class="source-link" href="https://github.com/hqiu-nju/ff_unifier" target="_blank" rel="noopener noreferrer">View on GitHub <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">ONE FLIGHT. MORE POSSIBILITIES.</p>
+      <h1 id="page-title">Make every<br>flight <em>count.</em></h1>
+      <p class="intro-copy">Find your next flight or award seat. Then see what a paid flight could earn across your loyalty programmes.</p>
+      <div class="local-badge"><span class="status-dot" aria-hidden="true"></span> Earnings calculated on your device</div>
+    </section>
+
+    <nav class="mode-links" aria-label="Flight tools"><a href="#amex-form">Convert Amex points <span aria-hidden="true">↗</span></a><a href="#search-form">Find flights &amp; awards <span aria-hidden="true">↗</span></a><a href="#flight-form">Compare earnings <span aria-hidden="true">↗</span></a></nav>
+
+    <section class="amex-panel" aria-labelledby="amex-title">
+      <div class="section-heading"><div><p class="eyebrow">AUSTRALIAN MEMBERSHIP REWARDS</p><h2 id="amex-title">Where could your Amex points take you?</h2></div><span class="estimate-tag">Base-rate estimates</span></div>
+      <form id="amex-form" aria-label="Amex points conversion">
+        <div class="detail-fields">
+          <div class="field"><label for="amex-balance">Your Amex points balance</label><input id="amex-balance" name="amex_balance" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="13" value="100000" required aria-describedby="amex-help"></div>
+          <div class="field"><label for="amex-profile">Your Membership Rewards programme</label><select id="amex-profile" name="amex_profile" aria-describedby="amex-help"></select></div>
+        </div>
+        <p id="amex-help" class="field-help">For Australian Ascent and Ascent Premium balances. Check the programme in your Amex account; other tiers and direct-earn Qantas or Velocity cards use different rules.</p>
+        <p id="amex-error" class="notice error" role="alert" hidden></p>
+        <div class="submit-row"><p>Compare one balance across airline partners.<br>Calculated on your device.</p><button class="primary-button" type="submit">Convert points →</button></div>
+      </form>
+      <p id="amex-status" class="sr-only" role="status" aria-live="polite"></p>
+      <div id="amex-results">
+        <p id="amex-summary" class="amex-summary"></p>
+        <p class="field-help">Each row uses the same balance separately. These are award points or miles, separate from flight earnings and status credits.</p>
+        <div class="amex-table-wrap" role="region" aria-label="Amex airline conversion estimates" tabindex="0">
+          <table class="amex-table">
+            <caption class="sr-only">Estimated partner points from your Australian Amex balance</caption>
+            <thead><tr><th scope="col">Airline programme</th><th scope="col">MR : partner</th><th scope="col">Estimated points</th><th scope="col">Transfer notes</th></tr></thead>
+            <tbody id="amex-rows"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="field-help amex-source-note"><span id="amex-reviewed"></span> Whole-point arithmetic before partner transfer increments; actual transfers may leave more points unused. Published minimums and rates are indicative, exclude promotional bonuses, and may differ by card. Confirm eligibility and the final rate in your Amex account before transferring.</p>
+      <p class="field-help">Sources: <a data-amex-source="amex" target="_blank" rel="noopener noreferrer">Amex transfer partners</a> · <a data-amex-source="rates" target="_blank" rel="noopener noreferrer">Point Hacks reference rates</a> · <a data-amex-source="terms" target="_blank" rel="noopener noreferrer">Amex terms</a></p>
+    </section>
+
+    <section class="search-panel" aria-labelledby="search-title">
+      <div class="section-heading"><div><p class="eyebrow">FIND YOUR NEXT FLIGHT</p><h2 id="search-title">Search flights &amp; award seats</h2></div><span class="estimate-tag">One-way · Adults</span></div>
+      <p id="search-availability" class="search-availability" role="status">Checking search availability…</p>
+      <form id="search-form" aria-label="Flight and award search">
+        <div class="detail-fields">
+          <div class="field"><label for="search-origin">From</label><input id="search-origin" list="airports" maxlength="3" placeholder="Airport code, e.g. PER" autocomplete="off" required></div>
+          <div class="field"><label for="search-destination">To</label><input id="search-destination" list="airports" maxlength="3" placeholder="Airport code, e.g. SIN" autocomplete="off" required></div>
+        </div>
+        <div class="search-details">
+          <div class="field"><label for="departure-date">Departure date</label><input id="departure-date" type="date" required></div>
+          <div class="field"><label for="search-cabin">Cabin</label><select id="search-cabin"><option value="economy">Economy</option><option value="premium_economy">Premium economy</option><option value="business">Business</option><option value="first">First</option></select></div>
+          <div class="field"><label for="search-adults">Adults</label><input id="search-adults" type="number" min="1" max="9" step="1" value="1" required></div>
+        </div>
+        <div class="detail-fields">
+          <div class="field"><label for="search-kind">Search for</label><select id="search-kind"><option value="cash">Cash fares</option><option value="award">Award seats</option></select></div>
+          <div id="award-source-field" class="field" hidden><label for="award-source">Book with points from</label><select id="award-source"></select></div>
+        </div>
+        <p class="field-help">Live searches send the route, date, cabin and adult count to this site's travel data provider. Earnings comparisons below stay in your browser.</p>
+        <p id="search-error" class="notice error" role="alert" hidden></p>
+        <div class="submit-row"><p id="search-description">No installation needed.</p><button id="search-submit" class="primary-button" type="submit" disabled>Search flights →</button></div>
+      </form>
+    </section>
+
+    <section id="search-results" class="results search-results" aria-labelledby="search-results-title" aria-busy="false" hidden>
+      <div class="section-heading"><div><p class="eyebrow">YOUR SEARCH RESULTS</p><h2 id="search-results-title" tabindex="-1">Flight options</h2></div><span id="search-data-mode" class="estimate-tag"></span></div>
+      <p id="search-result-summary" class="field-help"></p>
+      <p id="search-result-notice" class="notice"></p>
+      <div class="search-filters"><div class="field"><label for="search-sort">Sort results</label><select id="search-sort"><option value="price">Price / points</option><option value="departure">Departure time</option></select></div><label class="direct-filter"><input id="nonstop-only" type="checkbox"> Nonstop only</label></div>
+      <div id="flight-offers" class="flight-offers"></div>
+      <p id="search-result-count" class="field-help" role="status"></p>
+    </section>
+
+    <noscript><p class="notice error">Enable JavaScript to use FF Unifier. All calculations run in your browser.</p></noscript>
+    <p id="startup-error" class="notice error" role="alert" hidden></p>
+
+    <form id="flight-form" class="comparison-form" aria-label="Flight comparison">
+      <div class="section-heading"><div><p class="eyebrow">01 / YOUR FLIGHT</p><h2>Where are you flying?</h2></div><button type="button" id="example" class="text-button" disabled>Try an example <span aria-hidden="true">↗</span></button></div>
+
+      <fieldset id="flight-fields" disabled>
+        <legend class="sr-only">Flight details</legend>
+        <p id="import-flight-info" class="notice" role="status" hidden></p>
+        <div class="route-fields">
+          <div class="field"><label for="origin">From</label><input id="origin" name="origin" list="airports" placeholder="Airport code, e.g. SYD" autocomplete="off" maxlength="3" required aria-describedby="airport-help"></div>
+          <button type="button" id="swap" class="swap-button" aria-label="Swap origin and destination">⇄</button>
+          <div class="field"><label for="destination">To</label><input id="destination" name="destination" list="airports" placeholder="Airport code, e.g. LHR" autocomplete="off" maxlength="3" required aria-describedby="airport-help"></div>
+        </div>
+        <p class="field-help" id="airport-help">Type a three-letter airport code or choose a suggestion.</p>
+        <datalist id="airports"></datalist>
+        <div class="detail-fields">
+          <div class="field"><label for="airline">Operating airline</label><select id="airline" name="airline" required><option value="">Select airline</option></select></div>
+          <div class="field"><label for="booking_class">Booking class</label><select id="booking_class" name="booking_class" required aria-describedby="class-help"><option value="">Select booking class</option></select></div>
+        </div>
+        <p id="class-help" class="field-help">Use the letter on your ticket. Cabin names and fare rules vary by airline.</p>
+      </fieldset>
+
+      <fieldset id="program-fields" class="program-section" disabled>
+        <legend><span class="eyebrow">02 / YOUR PROGRAMMES</span><span class="legend-title">Compare your options</span></legend>
+        <p id="program-help" class="field-help">Select one to three loyalty programmes.</p>
+        <div id="programs" class="program-grid"></div>
+        <p id="program-count" class="selection-count" aria-live="polite"></p>
+      </fieldset>
+
+      <p id="form-error" class="notice error" role="alert" hidden></p>
+      <div class="submit-row"><p>Your flight details stay in this browser.<br>No account or installation needed.</p><button id="calculate" class="primary-button" type="submit" disabled>Loading calculator…</button></div>
+    </form>
+
+    <p id="calculation-status" class="sr-only" role="status" aria-live="polite">Loading calculator.</p>
+    <section id="results" class="results" aria-labelledby="results-title" aria-busy="false" hidden>
+      <div class="section-heading"><div><p class="eyebrow">YOUR COMPARISON</p><h2 id="results-title" tabindex="-1">Estimated earnings</h2></div><span class="estimate-tag">One-way · Per passenger</span></div>
+      <div id="route-summary" class="route-summary"></div>
+      <div id="result-cards" class="result-grid"></div>
+    </section>
+
+    <aside class="method-note"><span class="note-symbol" aria-hidden="true">i</span><div><h2>A guide to your possibilities</h2><p>Earnings estimates use bundled tables which may be outdated or simplified. Check official programme rules before booking. Search results depend on the connected provider's coverage and access; an empty result does not prove there are no flights or seats. Prices and availability can change. This site does not issue tickets.</p></div></aside>
+  </main>
+
+  <footer><span>FF Unifier</span><span>Independent. Open source. Not affiliated with any airline.</span></footer>
+
+  <template id="result-template"><article class="result-card"><p class="result-index"></p><h3></h3><p class="result-currency"></p><p class="result-miles"></p><div class="result-status-row"><span class="result-status-unit"></span><strong class="result-status"></strong></div><p class="result-rate"></p></article></template>
+</body>
+</html>
